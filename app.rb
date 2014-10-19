@@ -7,6 +7,11 @@ require 'em-websocket'
 EventMachine.run do
   class App < Sinatra::Base
 
+    get '/' do
+      random_number = (2000..65000).sample
+      erb :introduction, :locals => {:random_number => random_number}
+    end
+
     # setup a given chatroom by port number
     # e.g. localhost:3000/4001 opens port 4001
     get '/:rando' do
