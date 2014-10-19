@@ -1,37 +1,10 @@
 <!doctype html>
 <html>
   <head>
-    <style type="text/css">
-      #chat-log {
-        padding-bottom: 45px;
-      }
-
-      #chat-hole {
-        padding: 5px 5px 5px 5px;
-        background: pink;
-        bottom:0;
-        position:fixed;
-        z-index:150;
-        _position:absolute;
-        _top:expression(eval(document.documentElement.scrollTop+
-            (document.documentElement.clientHeight-this.offsetHeight)));
-        height:35px;
-      }
-
-      .me-text {
-        color: red;
-      }
-
-      .them-text {
-        color: green;
-      }
-    </style>
-
+    <link rel="stylesheet" href="/css/application.css" />
   </head>
 
   <body>
-    <!-- # WebSockets Chat App -->
-
     <div id="chat-log">
       <!-- displays connection status -->
     </div>
@@ -42,99 +15,10 @@
       <button id="disconnect-all">Disconnect All</button>
     </div>
 
+    <!-- SCRIPTS -->
 
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
-
-    <script>
-
-      // Websocket client logic!
-
-      var socket,
-          host = "ws://localhost:" + <%= port_number %>;
-
-      function addMessage(msg) {
-        $("#chat-log").append(msg + "<br>");
-      }
-
-      function addOutgoing(msg) {
-        $("#chat-log").append("<p class='me-text'>  ME: " + msg + "</p><br>");
-      }
-
-      function addIncoming(msg) {
-        $("#chat-log").append("<p class='them-text'>THEM: " + msg + "</p><br>");
-      }
-
-      function scrollToBottom() {
-        var scrollBottom = $(window).scrollTop() + $(window).height();
-        $(window).scrollTop(scrollBottom);
-      }
-
-      function send() {
-        var text = $("#message").val();
-
-        if (text == '') {
-          addMessage("Please Enter a Message");
-          return;
-        }
-
-        try {
-          socket.send(text);
-          addOutgoing(text)
-        } catch(exception) {
-          addMessage("Failed to Send")
-        }
-
-        $("#message").val('');
-      }
-
-      function connect() {
-        try {
-          socket = new WebSocket(host);
-
-          addMessage("Socket State: " + socket.readyState);
-
-          socket.onopen = function() {
-            addMessage("Socket Status: " + socket.readyState + " (open)");
-          }
-
-          socket.onclose = function() {
-            addMessage("Socket Status: " + socket.readyState + " (closed)");
-          }
-
-          socket.onmessage = function(msg) {
-            addIncoming(msg.data);
-            scrollToBottom();
-          }
-        } catch(exception) {
-          addMessage("Error: " + exception);
-        }
-      }
-
-      $('#message').keypress(function(event) {
-        if (event.keyCode == '13') { send(); }
-      });
-
-      $("#disconnect").click(function() {
-        socket.close();
-      })
-
-      $("#disconnect-all").click(function() {
-          $.ajax({
-              url:"halt",
-              success: function(result){
-                // YAY!
-              },
-              error: function(result) {
-                // BOO!
-              }
-          });
-        socket.close();
-      })
-
-      $(function() {
-        connect();
-      });
-
-    </script>
+    <script> host = "ws://localhost:" + <%= port_number %>; </script>
+    <script src="application.js"></script>
   </body>
 </html>
