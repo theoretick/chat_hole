@@ -60,5 +60,5 @@ EventMachine.run do
     end
   end
 
-  App.run! :port => 3000
+  App.run! :port => (ENV['PORT'] || 3000)
 end
