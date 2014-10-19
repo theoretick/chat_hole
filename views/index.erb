@@ -1,24 +1,73 @@
 <!doctype html>
 <html>
   <head>
+    <style type="text/css">
+      #chat-log {
+        padding-bottom: 45px;
+      }
+
+      #chat-hole {
+        padding: 5px 5px 5px 5px;
+        background: pink;
+        bottom:0;
+        position:fixed;
+        z-index:150;
+        _position:absolute;
+        _top:expression(eval(document.documentElement.scrollTop+
+            (document.documentElement.clientHeight-this.offsetHeight)));
+        height:35px;
+      }
+
+      .me-text {
+        color: red;
+      }
+
+      .them-text {
+        color: green;
+      }
+    </style>
+
   </head>
+
   <body>
+    <!-- # WebSockets Chat App -->
 
-      <!-- # WebSockets Chat App -->
-      <div id="chat-log">
+    <div id="chat-log">
+      <!-- displays connection status -->
+    </div>
 
-        <input type="text" id="message">
-        <button id="disconnect">Disconnect</button>
-
+    <div id="chat-hole">
+      <input type="in-text" id="message">
+      <button id="disconnect">Disconnect</button>
+      <button id="disconnect-all">Disconnect All</button>
+    </div>
 
 
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+
     <script>
 
       // Websocket client logic!
 
       var socket,
           host = "ws://localhost:" + <%= port_number %>;
+
+      function addMessage(msg) {
+        $("#chat-log").append(msg + "<br>");
+      }
+
+      function addOutgoing(msg) {
+        $("#chat-log").append("<p class='me-text'>  ME: " + msg + "</p><br>");
+      }
+
+      function addIncoming(msg) {
+        $("#chat-log").append("<p class='them-text'>THEM: " + msg + "</p><br>");
+      }
+
+      function scrollToBottom() {
+        var scrollBottom = $(window).scrollTop() + $(window).height();
+        $(window).scrollTop(scrollBottom);
+      }
 
       function send() {
         var text = $("#message").val();
@@ -30,16 +79,12 @@
 
         try {
           socket.send(text);
-          addMessage("Sent: " + text)
+          addOutgoing(text)
         } catch(exception) {
           addMessage("Failed to Send")
         }
 
         $("#message").val('');
-      }
-
-      function addMessage(msg) {
-        $("#chat-log").append("\n" + msg + "\n");
       }
 
       function connect() {
@@ -57,7 +102,8 @@
           }
 
           socket.onmessage = function(msg) {
-            addMessage("Received: " + msg.data);
+            addIncoming(msg.data);
+            scrollToBottom();
           }
         } catch(exception) {
           addMessage("Error: " + exception);
@@ -69,6 +115,19 @@
       });
 
       $("#disconnect").click(function() {
+        socket.close();
+      })
+
+      $("#disconnect-all").click(function() {
+          $.ajax({
+              url:"halt",
+              success: function(result){
+                // YAY!
+              },
+              error: function(result) {
+                // BOO!
+              }
+          });
         socket.close();
       })
 

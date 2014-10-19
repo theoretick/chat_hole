@@ -3,37 +3,31 @@
 require 'thin'
 require 'sinatra/base'
 require 'em-websocket'
-require 'socket'
-require 'timeout'
 
 EventMachine.run do
   class App < Sinatra::Base
+
+    # setup a given chatroom by port number
+    # e.g. localhost:3000/4001 opens port 4001
     get '/:rando' do
       socket_up!(params[:rando])
       erb :index, :locals => {:port_number => port_from(params[:rando])}
     end
 
+    get '/halt' do
+      puts "ALL CONNECTIONS TERMINATED."
+      EventMachine.stop
+    end
+
+    # TODO: This should generated a valid port in a repeatable way
+    # from a given URL string, instead of specifying one explicitly
     def port_from(random_string)
       random_string
-      # 3001
     end
 
   end
 
-  def port_open?(ip, port, seconds=1)
-    Timeout::timeout(seconds) do
-      begin
-        TCPSocket.new(ip, port).close
-        true
-      rescue Errno::ECONNREFUSED, Errno::EHOSTUNREACH
-        false
-      end
-    end
-  rescue Timeout::Error
-    false
-  end
-
-  def socket_up!(port = '3001')
+  def socket_up!(port = '3333')
 
     @clients = []
 
@@ -60,8 +54,6 @@ EventMachine.run do
       nil
     end
   end
-
-  # socket_up!
 
   App.run! :port => 3000
 end
