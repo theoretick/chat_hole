@@ -8,7 +8,7 @@ EventMachine.run do
   class App < Sinatra::Base
 
     get '/' do
-      random_number = (2000..65000).sample
+      random_number = (2000..65000).to_a.sample
       erb :introduction, :locals => {:random_number => random_number}
     end
 
