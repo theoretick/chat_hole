@@ -27,32 +27,34 @@ EventMachine.run do
 
     private
 
-    # TODO: This should generated a valid port in a repeatable way
-    # from a given URL string, instead of specifying one explicitly
-    def port_from(random_string)
-      random_string
-    end
-
     def socket_up!(port = '3333')
 
-      @clients = []
+      @clients = Hash.new({
+        channel: nil#,
+        # member_sids: []
+      })
 
       begin
         EM::WebSocket.start(host: HOST, port: port) do |ws|
+          @clients[port][:channel] ||= EM::Channel.new
+          @channel = @clients[port][:channel]
+
           ws.onopen do |handshake|
-            @clients << ws
-            ws.send("Connected to #{handshake.path}.")
-          end
+            ws.send("Welcome to Room ##{port}.")
 
-          ws.onclose do
-            ws.send "Closed."
-            @clients.delete(ws)
-          end
+            sid = @channel.subscribe { |msg| ws.send msg }
 
-          ws.onmessage do |msg|
-            @clients.each do |socket|
-              socket.send(msg)
+            @channel.push("[BROADCAST] Anon_#{sid} Logged in.")
+
+            ws.onmessage do |msg|
+              @channel.push("[MSG] \<Anon_#{sid}\>: #{msg}")
             end
+
+            ws.onclose {
+              ws.send("Disconnecting...")
+              @channel.push("[EVENT] Anon_#{sid} has left...")
+              @channel.unsubscribe(sid)
+            }
           end
         end
       rescue => e
@@ -62,5 +64,11 @@ EventMachine.run do
     end
   end
 
-  App.run! :port => (ENV['PORT'] || 3000)
+  # TODO: This should generated a valid port in a repeatable way
+  # from a given URL string, instead of specifying one explicitly
+  def port_from(random_string)
+    random_string
+  end
+
+  App.run! :port => (ENV['PORT'] || 3001)
 end

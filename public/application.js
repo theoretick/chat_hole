@@ -1,18 +1,31 @@
 
 // Websocket client logic!
 
-var socket;
+var socket,
+    userID,
+    // toggle to ignore and not double-display outgoing broadcasts
+    outgoingToggle = false;
 
-function addMessage(msg) {
-  $("#chat-log").append(msg + "<br>");
+function logMessage(msg) {
+  $("#chat-log").append("<p class='log-text'>" + msg + "</p>");
 }
 
 function addOutgoing(msg) {
-  $("#chat-log").append("<p class='me-text'>  ME: " + msg + "</p><br>");
+  outgoingToggle = true;
+  $("#chat-log").append("<p class='me-text'> &lt;" + userID + "&gt;: " + msg + "</p>");
 }
 
 function addIncoming(msg) {
-  $("#chat-log").append("<p class='them-text'>THEM: " + msg + "</p><br>");
+  if (isFirstMessage(msg)) {
+    ensureCaptureUserId(msg);
+  } else if (!outgoingToggle) {
+    escaped_msg = msg
+      .replace(/^\[MSG\]\s/, '')
+      .replace(/>/g, "&gt;")
+      .replace(/</g, "&lt;");
+    $("#chat-log").append("<p class='them-text'>" + escaped_msg + "</p>");
+  }
+  outgoingToggle = false;
 }
 
 function scrollToBottom() {
@@ -20,11 +33,30 @@ function scrollToBottom() {
   $(window).scrollTop(scrollBottom);
 }
 
-function send() {
-  var text = $("#message").val();
+function isFirstMessage(msg) {
+  return (userID === undefined && isBroadcast(msg)) ? true : false;
+}
 
+// capture userID on the FIRST broadcast
+function ensureCaptureUserId(msg) {
+  var my_id = msg.match(/Anon_\d/)[0];
+  setUserID(my_id);
+}
+
+// bool if channel message is a BROADCAST (non ANNOUNCE, non ME)
+function isBroadcast(msg) {
+  return !!msg.match(/^\[BROADCAST/);
+}
+
+// executes ONCE onLoad to set current user's userID
+function setUserID(id_str) {
+  $('#user_name').html(id_str + " >");
+  userID = id_str;
+}
+
+function broadcast(text) {
   if (text == '') {
-    addMessage("Please Enter a Message");
+    logMessage("Please Enter a Message");
     return;
   }
 
@@ -32,24 +64,24 @@ function send() {
     socket.send(text);
     addOutgoing(text)
   } catch(exception) {
-    addMessage("Failed to Send")
+    logMessage("Failed to Send")
   }
 
-  $("#message").val('');
+  $("#message_container").val('');
 }
 
 function connect() {
   try {
     socket = new WebSocket(host);
 
-    addMessage("Socket State: " + socket.readyState);
+    logMessage("Socket State: " + socket.readyState);
 
     socket.onopen = function() {
-      addMessage("Socket Status: " + socket.readyState + " (open)");
+      logMessage("Socket Status: " + socket.readyState + " (open)");
     }
 
     socket.onclose = function() {
-      addMessage("Socket Status: " + socket.readyState + " (closed)");
+      logMessage("Socket Status: " + socket.readyState + " (closed)");
     }
 
     socket.onmessage = function(msg) {
@@ -57,12 +89,22 @@ function connect() {
       scrollToBottom();
     }
   } catch(exception) {
-    addMessage("Error: " + exception);
+    logMessage("Error: " + exception);
   }
 }
 
-$('#message').keypress(function(event) {
-  if (event.keyCode == '13') { send(); }
+// set doc title to room number
+function setTitleByPath() {
+  var page_path = window.location.href.split('/');
+  var port = page_path[page_path.length - 1];
+  document.title = "Chat Hole - Room #" + port;
+}
+
+$('#message_container').keypress(function(event) {
+  if (event.keyCode == '13') {
+    var message_text = $("#message_container").val();
+    broadcast(message_text);
+  }
 });
 
 $("#disconnect").click(function() {
@@ -82,6 +124,13 @@ $("#disconnect-all").click(function() {
   socket.close();
 })
 
+window.onbeforeunload = closingCode;
+function closingCode(){
+    socket.close();
+    return null;
+}
+
 $(function() {
   connect();
+  setTitleByPath();
 });
