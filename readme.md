@@ -8,7 +8,7 @@ fun with websockets.
 ## What does it
 
 any realistic URL will open up a chatroom on that port via the magic of
-websockets.   Limited to whatever the theoretical limit of available
+websockets.   Limited to whatever the hard-limit of available
 ports is (something like 65k..?).
 
 e.g. `localhost:3000/4040` for chatting with others on port 4040
