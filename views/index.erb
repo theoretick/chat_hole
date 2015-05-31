@@ -18,7 +18,7 @@
     <!-- SCRIPTS -->
 
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
-    <script> host = "ws://localhost:" + <%= port_number %>; </script>
+    <script> host = '<%= "ws://#{host}:#{port_number}" %>'; </script>
     <script src="application.js"></script>
   </body>
 </html>

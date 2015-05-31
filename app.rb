@@ -6,7 +6,11 @@ require 'em-websocket'
 EventMachine.run do
   class App < Sinatra::Base
 
-    HOST = '0.0.0.0'
+    if environment == :production
+      HOST = '192.155.84.167'
+    else
+      HOST = '0.0.0.0'
+    end
 
     get '/' do
       random_port = (2000..65000).to_a.sample
@@ -17,7 +21,7 @@ EventMachine.run do
     # e.g. localhost:3000/4001 opens port 4001
     get '/:rando' do
       socket_up!(params[:rando])
-      erb :index, :locals => {:port_number => port_from(params[:rando])}
+      erb :index, :locals => {:host => HOST, :port_number => port_from(params[:rando])}
     end
 
     get '/halt' do

@@ -50,7 +50,7 @@ function isBroadcast(msg) {
 
 // executes ONCE onLoad to set current user's userID
 function setUserID(id_str) {
-  $('#user_name').html(id_str + " >");
+  $('#user_name').html(" &lt;" + id_str + "&gt; ");
   userID = id_str;
 }
 
